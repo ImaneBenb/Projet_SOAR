@@ -23,11 +23,14 @@ def calculate_suspicion_score(ip_addresses_SSH, ip_addresses_HTTP, ip_addresses_
             highly_suspect = True
         if http_404s >= http_404_threshold and bot_requests >= bot_threshold:
             highly_suspect = True
-        
-        suspicion_scores[ip] = {
-            'ssh_failures': ssh_failures,
-            'http_404s': http_404s,
-            'bot_requests': bot_requests
-        }
+            
+        # Enregistrer les scores si l'IP est hautement suspecte
+        if highly_suspect:
+            suspicion_scores[ip] = {
+                'ssh_failures': ssh_failures,
+                'http_404s': http_404s,
+                'bot_requests': bot_requests, 
+                'activity_volume': ssh_failures + http_404s + bot_requests
+            }
     
     return suspicion_scores

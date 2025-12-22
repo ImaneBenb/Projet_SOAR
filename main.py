@@ -1,6 +1,6 @@
 import os
 import module.log_parser as log_parser
-import module.data_analyser as data_analyzer
+import module.data_analyzer as data_analyzer
 
 def main():
     print("--- 🛠️  MODE DEBUG 🛠️  ---")

@@ -1,45 +1,45 @@
-import os
-import module.log_parser as log_parser
+# 1. Visualisation : Générer un histogramme (bar chart) avec matplotlib des Top 5 des IPs basé sur leur score de suspicion combiné (Étape 1).
+#2. Rapport Final : Exporter un fichier de synthèse (rapport_securite.csv) incluant :
+#• L'IP
+#• Le Score de Suspicion (total des incidents)
+#• La Raison Principale (SSH Failed/404/Bot)
+#• La liste des Ports Ouverts trouvés lors du scan.
+
+import csv
+import matplotlib.pyplot as plt
 import module.data_analyzer as data_analyzer
+import module.log_parser as log_parser
+import log 
 
-def main():
-    print("--- 🛠️  MODE DEBUG 🛠️  ---")
+# Fonction pour générer le rapport de suspicion et l'histogramme
+def generate_suspicion_report(suspicion_scores, scan_results, output_csv='rapport_securite.csv'):
     
-    # 1. Vérification des chemins
-    log_folder = "log"
-    auth_path = os.path.join(log_folder, "auth.log")
-    access_path = os.path.join(log_folder, "access.log")
+    # Préparer les données pour le rapport
+    report_data = data_analyzer.calculate_suspicion_score(suspicion_scores,log_parser.extract_ip_accesslog(log.access.log),log_parser.extract_ip_authlog(log.auth.log))
     
-    # 2. Parsing (Extraction)
-    print(f"\n[1] Parsing des fichiers...")
+    # Écrire le rapport dans un fichier CSV
+    with open(output_csv, mode='w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['IP', 'Score de Suspicion', 'Raison Principale', 'Ports Ouverts']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        for row in report_data:
+            writer.writerow(row)
     
-    # On vérifie ce que le parser trouve VRAIMENT
-    ssh_data = log_parser.extract_ip_authlog(auth_path)
-    print(f"    -> SSH Data (Brut) : {ssh_data}") 
-    # Si ça affiche {}, c'est que le parser SSH ne marche pas sur ce fichier
+    print(f"Rapport de sécurité généré : {output_csv}")
     
-    http_data, bot_data = log_parser.extract_ip_accesslog(access_path)
-    print(f"    -> HTTP 404 (Brut) : {http_data}")
-    print(f"    -> HTTP Bot (Brut) : {bot_data}")
-
-    # 3. Analyse (Test des seuils)
-    print(f"\n[2] Analyse...")
+    # Générer un histogramme des Top 5 IPs par score de suspicion
+    top_ips = sorted(report_data, key=lambda x: x['Score de Suspicion'], reverse=True)[:5]
+    ips = [entry['IP'] for entry in top_ips]
+    scores = [entry['Score de Suspicion'] for entry in top_ips]
     
-    # Appel de la fonction
-    suspects = data_analyzer.calculate_suspicion_score(ssh_data, http_data, bot_data)
+    plt.figure(figsize=(10, 6))
+    plt.bar(ips, scores, color='red')
+    plt.xlabel('Adresses IP')
+    plt.ylabel('Score de Suspicion')
+    plt.title('Top 5 des IPs par Score de Suspicion')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
     
-    print(f"    -> Résultat final (Suspects) : {suspects}")
-
-    # 4. Diagnostic
-    if not ssh_data and not http_data:
-        print("\n❌ DIAGNOSTIC : Les dictionnaires sont vides.")
-        print("   -> Vérifie tes Regex dans log_parser.py")
-        print("   -> Ouvre tes fichiers logs pour voir s'ils contiennent bien des IPs et les mots clés.")
-    elif len(suspects) == 0:
-        print("\n⚠️  DIAGNOSTIC : Des données ont été trouvées, mais aucune ne dépasse les seuils.")
-        print("   -> Essaie de baisser les seuils dans data_analyzer.py (ex: ssh=1, bot=1).")
-    else:
-        print(f"\n✅ SUCCÈS : {len(suspects)} suspects trouvés.")
-
-if __name__ == "__main__":
-    main()
+    return report_data

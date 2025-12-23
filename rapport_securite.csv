@@ -1,1 +1,6 @@
 IP,Score de Suspicion,Raison Principale,Ports Ouverts
+192.168.50.44,90,Crawler Agressif,Aucun
+10.10.99.88,52,Brute Force SSH,Aucun
+141.89.150.32,80,Brute Force SSH,Aucun
+141.89.150.38,60,Brute Force SSH,Aucun
+141.89.150.31,35,Crawler Agressif,Aucun

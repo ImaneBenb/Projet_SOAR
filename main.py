@@ -64,8 +64,8 @@ def generate_suspicion_report(suspicion_scores, scan_results, output_csv='rappor
 
 def main():
     # Chemins des fichiers de logs
-    authlog_path = os.path.join('logs', 'auth.log')
-    accesslog_path = os.path.join('logs', 'access.log')
+    authlog_path = os.path.join('log', 'auth.log')
+    accesslog_path = os.path.join('log', 'access.log')
     
     # Extraire les adresses IP suspectes des logs
     ip_addresses_SSH = log_parser.extract_ip_authlog(authlog_path)

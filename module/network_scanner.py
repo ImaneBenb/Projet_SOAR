@@ -41,8 +41,7 @@ def network_scan(suspicious_ips):
     port_range = list(range(20, 24)) + [80, 443, 3389, 8080] 
     scan_results = {}
     
-    for suspect in suspicious_ips:
-        ip = suspect['ip']         
+    for ip in suspicious_ips:      
         open_ports = scan_ip_ports(ip, port_range)
         scan_results[ip] = open_ports
             

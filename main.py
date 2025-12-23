@@ -1,27 +1,44 @@
-# 1. Visualisation : Générer un histogramme (bar chart) avec matplotlib des Top 5 des IPs basé sur leur score de suspicion combiné (Étape 1).
-#2. Rapport Final : Exporter un fichier de synthèse (rapport_securite.csv) incluant :
-#• L'IP
-#• Le Score de Suspicion (total des incidents)
-#• La Raison Principale (SSH Failed/404/Bot)
-#• La liste des Ports Ouverts trouvés lors du scan.
-
+import os 
 import csv
 import matplotlib.pyplot as plt
 import module.data_analyzer as data_analyzer
 import module.log_parser as log_parser
-import log 
+import module.network_scanner as network_scanner
 
 # Fonction pour générer le rapport de suspicion et l'histogramme
 def generate_suspicion_report(suspicion_scores, scan_results, output_csv='rapport_securite.csv'):
     
     # Préparer les données pour le rapport
-    report_data = data_analyzer.calculate_suspicion_score(suspicion_scores,log_parser.extract_ip_accesslog(log.access.log),log_parser.extract_ip_authlog(log.auth.log))
+    report_data = []
+    
+    # On itère sur le dictionnaire { IP: {details} }
+    for ip, details in suspicion_scores.items():
+        total_score = details['activity_volume']
+        
+        # On reconstruit la raison lisible pour le rapport
+        reasons = []
+        if details['ssh_failures'] >= 50:
+            reasons.append('Brute Force SSH')
+        if details['bot_requests'] >= 10 and details['http_404s'] > 0:
+            reasons.append('Crawler Agressif')
+        
+        main_reason = ' & '.join(reasons) if reasons else "Activité Suspecte"
+        
+        # On récupère les ports du scan
+        open_ports = scan_results.get(ip, [])
+        ports_str = ', '.join(map(str, open_ports)) if open_ports else 'Aucun'
+        
+        report_data.append({
+            'IP': ip,
+            'Score de Suspicion': total_score,
+            'Raison Principale': main_reason,
+            'Ports Ouverts': ports_str
+        })
     
     # Écrire le rapport dans un fichier CSV
     with open(output_csv, mode='w', newline='', encoding='utf-8') as csvfile:
         fieldnames = ['IP', 'Score de Suspicion', 'Raison Principale', 'Ports Ouverts']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)       
         writer.writeheader()
         for row in report_data:
             writer.writerow(row)

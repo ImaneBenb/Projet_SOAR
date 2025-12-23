@@ -57,6 +57,31 @@ def generate_suspicion_report(suspicion_scores, scan_results, output_csv='rappor
     plt.title('Top 5 des IPs par Score de Suspicion')
     plt.xticks(rotation=45)
     plt.tight_layout()
+    plt.savefig("top_5_menaces.png")
     plt.show()
     
     return report_data
+
+def main():
+    # Chemins des fichiers de logs
+    authlog_path = os.path.join('logs', 'auth.log')
+    accesslog_path = os.path.join('logs', 'access.log')
+    
+    # Extraire les adresses IP suspectes des logs
+    ip_addresses_SSH = log_parser.extract_ip_authlog(authlog_path)
+    ip_addresses_HTTP, ip_addresses_HTTP_bots = log_parser.extract_ip_accesslog(accesslog_path)
+    
+    # Analyser les données pour calculer les scores de suspicion
+    suspicion_scores = data_analyzer.calculate_suspicion_score(
+        ip_addresses_SSH, ip_addresses_HTTP, ip_addresses_HTTP_bots
+    )
+    
+    # Scanner les ports des IPs suspectes
+    suspicious_ips = list(suspicion_scores.keys())
+    scan_results = network_scanner.network_scan(suspicious_ips)
+    
+    # Générer le rapport de suspicion et l'histogramme
+    generate_suspicion_report(suspicion_scores, scan_results)
+    
+if __name__ == "__main__":
+    main()
